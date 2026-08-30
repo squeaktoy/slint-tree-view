@@ -184,3 +184,69 @@ fn style_defaults_track_palette() {
     let result = compile_consumer(snippet);
     assert_no_diagnostics(&result);
 }
+
+/// Every `TreeViewStyle` property is also settable **per instance**, and
+/// that is the path consumers must use.
+///
+/// The global alone is unreachable from a consumer: this `.slint` is
+/// compiled as a Slint library module, so a `TreeViewStyle::get(&window)`
+/// from Rust resolves to the consumer's own globals table and its writes
+/// silently do nothing — and a global cannot be re-opened from a
+/// consumer `.slint` at all (that is a parse error). This test pins the
+/// whole per-instance surface by name; dropping or renaming any of it
+/// breaks a consumer's theming, which is otherwise invisible until
+/// someone looks at the pixels.
+#[test]
+fn every_style_property_is_settable_per_instance() {
+    let snippet = r#"
+        import { TreeView } from "@TreeView";
+
+        export component Consumer inherits Window {
+            TreeView {
+                // Colors
+                background-color: #ffffff;
+                text-color: #212529;
+                disabled-text-color: #6a737d;
+                highlight-color: #dbeafe;
+                highlighted-text-color: #1e40af;
+                inactive-highlight-color: #e8e8e8;
+                inactive-highlighted-text-color: #000000;
+                hover-color: #e9ecef;
+                branch-indicator-color: #6a737d;
+                branch-line-color: transparent;
+                drop-indicator-color: #2266aa;
+
+                // Dimensions
+                disabled-opacity: 0.5;
+                row-height: 24px;
+                indentation: 16px;
+                branch-indicator-width: 14px;
+                decoration-spacing: 4px;
+                horizontal-padding: 6px;
+
+                // Glyphs
+                expanded-branch-indicator: "v";
+                collapsed-branch-indicator: ">";
+            }
+        }
+    "#;
+    let result = compile_consumer(snippet);
+    assert_no_diagnostics(&result);
+}
+
+/// The global still exists and still supplies the defaults, so an
+/// existing consumer that imports it keeps compiling.
+#[test]
+fn the_style_global_is_still_exported() {
+    let snippet = r#"
+        import { TreeView, TreeViewStyle } from "@TreeView";
+
+        export component Consumer inherits Window {
+            // Reading the global is legal; it is what every per-instance
+            // property defaults to.
+            TreeView { row-height: TreeViewStyle.row-height; }
+        }
+    "#;
+    let result = compile_consumer(snippet);
+    assert_no_diagnostics(&result);
+}

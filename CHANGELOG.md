@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-08-30
+
+### Fixed
+
+- **Theming from a consumer had no effect.** Both documented routes were
+  broken: `TreeViewStyle::get(&window)` from Rust resolves to the
+  consumer's own globals table rather than the one this library module
+  reads, so its setters silently did nothing; and the `.slint`
+  "override" syntax shown in the README (`TreeViewStyle { … }`) is not
+  valid Slint — a consumer cannot re-open a global, it is a parse error.
+  A consumer could therefore not change any color, dimension or glyph,
+  while the README advertised "full theming".
+
+### Added
+
+- Every `TreeViewStyle` property is now mirrored as an `in property` on
+  the `TreeView` component and read from there, so styling works per
+  instance — from `.slint`, or through the generated `set_*` on the
+  component. The global remains and still supplies the defaults, so
+  existing code that never set it is unaffected.
+- Test coverage pinning the whole per-instance property surface by name,
+  and that the global is still exported.
+
+### Changed
+
+- README's theming section rewritten: it documented two routes that did
+  not work.
+
 ## [0.2.1] — 2026-07-26
 
 ### Fixed

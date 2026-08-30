@@ -14,7 +14,7 @@ Slint does not yet ship a built-in TreeView ([slint-ui/slint#505](https://github
 - **Full keyboard navigation**: ↑/↓, Home/End, PageUp/PageDown (with `page-size`), ← (collapse / `current-parent-change-requested`), → / `+` / `*` (expand / recursive expand), `-` (collapse), Enter (activate). Unmapped keys bubble via `key-press-event`.
 - **Branch indicators** with dedicated click target (clicks don't change current item), `z: 1` so the indicator TouchArea wins over the row TouchArea when they overlap.
 - **Activation policy** — `activation-mode: single-click | double-click`. `expands-on-double-click` toggles whether double-clicking a branch expands it or activates it.
-- **Full theming** via the `TreeViewStyle` global: 9 colors (highlight + highlighted-text in both focused and inactive variants, hover, branch-indicator, branch-line, disabled-text, drop-indicator), 5 dimensions, 2 glyphs.
+- **Full theming** — every style property is settable per instance (colors, dimensions, glyphs), with the `TreeViewStyle` global supplying the defaults.
 - **Non-selectable / disabled items.** `selectable: false` for section headers (skipped by mouse); `enabled: false` for greyed-out items, applied via both `disabled-text-color` and a multiplicative `disabled-opacity` so it's visually obvious.
 - **Accessibility hooks** — every item exposes `accessible-role: list-item` + `accessible-label`.
 - **Right-click → context menu** via `pointer-event` (filters for right-button-down; Slint 1.17 has no dedicated `right-clicked`).
@@ -180,30 +180,53 @@ pub fn index_of_id_model(model: &slint::ModelRc<TreeItem>, internal_id: i32) -> 
 | Enter | Activate the item (gated on `enabled`). |
 | *other* | Forwarded to `key-press-event`. |
 
-### `TreeViewStyle` global
+### Theming
 
-Override globally from Slint:
+**Set the style on the instance.** Every property of `TreeViewStyle` is
+mirrored as an `in property` on `TreeView` itself:
 
 ```slint
-import { TreeViewStyle } from "@TreeView";
+import { TreeView } from "@TreeView";
 
-TreeViewStyle {
-    highlight-color: @palette.primary;
+TreeView {
+    highlight-color: #dbeafe;
+    highlighted-text-color: #1e40af;
     row-height: 24px;
     indentation: 16px;
 }
 ```
 
-…or from Rust after the window exists:
+That is also the way to bind the tree to your own theme, since a global
+from one compilation unit can be read by another component in the same
+unit:
 
-```rust
-use slint::Global;
-use slint_tree_view::TreeViewStyle;
+```slint
+import { MyTheme } from "theme.slint";
 
-let style = TreeViewStyle::get(&main_window);
-style.set_highlight_color(slint::Color::from_rgb_u8(0x1e, 0x90, 0xff));
-style.set_row_height(22.0);
+TreeView {
+    highlight-color: MyTheme.selection-bg;
+    text-color: MyTheme.text;
+}
 ```
+
+From Rust, set it through the component that owns the tree — expose a
+property on your window and bind it, or set the `TreeView` directly if
+it is your root component.
+
+#### Why not the global?
+
+The `TreeViewStyle` global supplies the **defaults** and nothing more.
+It is not a supported way for a *consumer* to theme the widget, because
+neither route to it works:
+
+- `TreeViewStyle::get(&my_window)` from Rust resolves to your own
+  compilation unit's globals table, not the one this library module
+  reads. The setters return successfully and change nothing.
+- A global cannot be re-opened from a consumer `.slint` at all — that is
+  a parse error, not an override.
+
+Both were previously documented here and neither worked; see CHANGELOG
+0.3.0.
 
 | Category | Property | Default |
 |---|---|---|
