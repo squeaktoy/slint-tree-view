@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] — 2026-10-17
+
+### Changed
+
+- The `slint` dependency no longer enables Slint's default features. A
+  widget library must not choose the application's window backend,
+  renderers or accessibility stack, and because Cargo features only add
+  up, it did: depending on this crate switched Slint's default
+  `backend-winit` (X11 included) back on even for an application that
+  builds for Wayland only. Applications pick those features on their own
+  `slint` dependency — one that already depends on `slint = "1.17"` with
+  its defaults sees no change.
+
 ## [0.3.0] — 2026-08-30
 
 ### Fixed
@@ -87,7 +100,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Init
 
-[Unreleased]: https://github.com/stdex/slint-tree-view/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/stdex/slint-tree-view/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/stdex/slint-tree-view/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/stdex/slint-tree-view/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/stdex/slint-tree-view/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/stdex/slint-tree-view/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/stdex/slint-tree-view/compare/v0.1.0...v0.1.1

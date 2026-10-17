@@ -35,6 +35,11 @@ slint-tree-view = "…"
 slint-build = { version = "1.17", features = ["experimental-module-builds"] }
 ```
 
+This crate depends on `slint` without its default features, so the window
+backend, renderers and accessibility stack are whatever your own `slint`
+dependency enables — the defaults, as above, or a narrower set such as
+`backend-winit-wayland` only.
+
 ### 2. Compile your `.slint` as usual
 
 ```rust

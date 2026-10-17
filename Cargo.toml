@@ -1,6 +1,6 @@
 [package]
 name = "slint-tree-view"
-version = "0.3.0"
+version = "0.3.1"
 edition = "2021"
 rust-version = "1.85"
 description = "TreeView component for Slint"
@@ -21,7 +21,12 @@ documentation = "https://docs.rs/slint-tree-view"
 links = "treeview"
 
 [dependencies]
-slint = "1.17"
+# No default features: a widget library must not choose the application's
+# window backend, renderers or accessibility stack. Cargo features only add
+# up, so Slint's defaults here would switch on e.g. the X11 backend for
+# every consumer, even one that builds for Wayland only. `compat-1-2` is
+# required by Slint itself; `std` is all the generated code needs.
+slint = { version = "1.17", default-features = false, features = ["std", "compat-1-2"] }
 
 [build-dependencies]
 slint-build = { version = "1.17", features = ["experimental-module-builds"] }
