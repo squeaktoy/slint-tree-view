@@ -49,6 +49,8 @@ export enum ActivationMode {
 ///   - `depth`              — nesting level (0 = top level). Each unit
 ///     adds `TreeViewStyle.indentation` of left pad.
 ///   - `text`               — user-visible label.
+///   - `label`              — accessible label for screen readers to
+//      announce. If empty, screen readers will use `text` instead.
 ///   - `decoration-text`    — optional leading glyph. Empty ⇒ nothing
 ///     drawn. The host chooses the glyph — there is no built-in
 ///     default (the view doesn't invent icons).
@@ -73,6 +75,7 @@ export struct TreeItem {
     parent-internal-id: int,
     depth: int,
     text: string,
+    label: string,
     decoration-text: string,
     item-type: int,
     user-data: string,
@@ -489,6 +492,9 @@ export component TreeView inherits Rectangle {
     // ---- View ---------------------------------------------------------
 
     ListView {
+        accessible-role: tree;
+        accessible-item-count: root.model.length;
+
         for item[i] in root.model: Rectangle {
             height: root.row-height;
             // Visually fade disabled rows. (Selection/hover still apply
@@ -511,12 +517,15 @@ export component TreeView inherits Rectangle {
                         ? root.hover-color
                         : transparent));
 
-            // Accessibility — expose the item to assistive tech with its
-            // label. Slint 1.17 has no `accessible-expanded`/
-            // `accessible-disabled`; when those land, bind them to
-            // `item.expanded`/`item.enabled`.
             accessible-role: list-item;
-            accessible-label: item.text;
+            accessible-label: item.label != "" ? item.label : item.text;
+            accessible-description: item.has-children ? (item.expanded ? "expanded" : "collapsed") : "";
+            accessible-enabled: item.enabled;
+            accessible-expanded: item.expanded;
+            accessible-expandable: item.has-children && root.items-expandable;
+            accessible-item-selectable: item.selectable;
+            accessible-item-selected: root.current-index == i;
+            accessible-item-index: i;
 
             HorizontalLayout {
                 spacing: 0px;
