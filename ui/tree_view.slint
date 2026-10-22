@@ -50,7 +50,7 @@ export enum ActivationMode {
 ///     adds `TreeViewStyle.indentation` of left pad.
 ///   - `text`               — user-visible label.
 ///   - `label`              — accessible label for screen readers to
-//      announce. If empty, screen readers will use `text` instead.
+///     announce. If empty, screen readers will use `text` instead.
 ///   - `decoration-text`    — optional leading glyph. Empty ⇒ nothing
 ///     drawn. The host chooses the glyph — there is no built-in
 ///     default (the view doesn't invent icons).
@@ -491,9 +491,17 @@ export component TreeView inherits Rectangle {
 
     // ---- View ---------------------------------------------------------
 
+    // The keyboard focus lives in `key-scope`, so the accessible node that
+    // owns it has to be one of its ancestors: the TreeView itself. It hands
+    // the screen reader's focus on to the current row.
+    accessible-role: tree;
+    accessible-item-count: root.model.length;
+    accessible-delegate-focus: root.current-index;
+
     ListView {
-        accessible-role: tree;
-        accessible-item-count: root.model.length;
+        // No node of its own: the rows have to be the TreeView's direct
+        // accessible children, since that's what `delegate-focus` indexes.
+        accessible-role: none;
 
         for item[i] in root.model: Rectangle {
             height: root.row-height;
@@ -517,9 +525,14 @@ export component TreeView inherits Rectangle {
                         ? root.hover-color
                         : transparent));
 
+            // AccessKit's AT-SPI adapter (Linux) doesn't forward
+            // `accessible-expanded` yet, so the state is also spelled out
+            // in the description for Orca to read.
             accessible-role: list-item;
             accessible-label: item.label != "" ? item.label : item.text;
-            accessible-description: item.has-children ? (item.expanded ? "expanded" : "collapsed") : "";
+            accessible-description: item.has-children && root.items-expandable
+                ? (item.expanded ? @tr("TreeView" => "expanded") : @tr("TreeView" => "collapsed"))
+                : "";
             accessible-enabled: item.enabled;
             accessible-expanded: item.expanded;
             accessible-expandable: item.has-children && root.items-expandable;
